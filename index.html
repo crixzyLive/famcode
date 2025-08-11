@@ -1,0 +1,300 @@
+
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>CrixZy Events</title>
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+  <style>
+    body {
+      background-color: #0f172a;
+      color: white;
+      font-family: 'Segoe UI', sans-serif;
+      padding: 16px;
+    }
+    /* Tabs */
+    .tab {
+      cursor: pointer;
+      padding: 10px 20px;
+      font-weight: bold;
+      border-radius: 9999px;
+      background: #1e293b;
+      margin: 5px;
+      color: white;
+    }
+    .tab.active {
+      background: linear-gradient(to right, #6366f1, #7c3aed);
+      color: white;
+    }
+    /* Match Card */
+    .match-card {
+      background: #1e293b;
+      border-radius: 1rem;
+      transition: transform 0.3s ease, background 0.3s ease;
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.4);
+    }
+    .match-card:hover {
+      transform: translateY(-6px) scale(1.02);
+      background: #334155;
+    }
+    .match-img {
+      transition: transform 0.3s ease;
+    }
+    .match-card:hover .match-img {
+      transform: scale(1.05);
+    }
+    /* Buttons */
+    .btn {
+      padding: 0.5rem 1.25rem;
+      border-radius: 0.5rem;
+      font-weight: 600;
+      font-size: 0.875rem;
+      transition: all 0.3s ease;
+    }
+    /* Glowing primary button */
+    .btn-primary {
+      background: linear-gradient(to right, #7c3aed, #6366f1);
+      color: white;
+      box-shadow: 0 0 10px #7c3aed, 0 0 20px #6366f1, 0 0 30px #7c3aed;
+      animation: glow 1.5s infinite alternate;
+    }
+    .btn-primary:hover {
+      background: linear-gradient(to right, #6d28d9, #4f46e5);
+    }
+    @keyframes glow {
+      from {
+        box-shadow: 0 0 5px #7c3aed, 0 0 10px #6366f1, 0 0 15px #7c3aed;
+      }
+      to {
+        box-shadow: 0 0 20px #7c3aed, 0 0 40px #6366f1, 0 0 60px #7c3aed;
+      }
+    }
+    .btn-secondary {
+      background: linear-gradient(to right, #10b981, #22c55e);
+      color: white;
+    }
+    .btn-secondary:hover {
+      background: linear-gradient(to right, #059669, #16a34a);
+    }
+    /* Disclaimer */
+    .disclaimer-button {
+      width: 100%;
+      background-color: #ff9800;
+      color: white;
+      padding: 10px;
+      border: none;
+      font-size: 16px;
+      cursor: pointer;
+      text-align: center;
+    }
+    .disclaimer-box {
+      display: none;
+      background-color: #fff3cd;
+      color: #856404;
+      padding: 20px;
+      position: relative;
+      border-bottom: 2px solid #ff9800;
+    }
+    .close-btn {
+      position: absolute;
+      top: 10px;
+      right: 20px;
+      background: none;
+      border: none;
+      font-size: 20px;
+      cursor: pointer;
+      color: #856404;
+    }
+  </style>
+</head>
+<body>
+
+<!-- Disclaimer -->
+<button class="disclaimer-button" onclick="showDisclaimer()">Must Read Disclaimer</button>
+<div class="disclaimer-box" id="disclaimerBox">
+  <button class="close-btn" onclick="closeDisclaimer()">×</button>
+  <p><strong>Disclaimer:</strong><br>
+    This Fancode web page is completely <strong>free</strong> to use. <strong>You do not need to pay</strong> any money to anyone for access.<br><br>
+    If someone has asked you for money or taken money in exchange for providing this page, <strong>you have been scammed</strong>.<br><br>
+    Please report such cases here: <a href="https://t.me/stellar74c" target="_blank" style="color:blue;">t.me/@stellar74c</a>
+  </p>
+</div>
+
+<!-- Tabs -->
+<div class="flex justify-center mb-6">
+  <div id="tab-live" class="tab active">Live</div>
+  <div id="tab-upcoming" class="tab">Upcoming</div>
+</div>
+
+<!-- Sections -->
+<section id="live" class="grid gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3"></section>
+<section id="upcoming" class="hidden grid gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3"></section>
+
+<script>
+function showDisclaimer() {
+  document.getElementById('disclaimerBox').style.display = 'block';
+}
+function closeDisclaimer() {
+  document.getElementById('disclaimerBox').style.display = 'none';
+}
+
+const tabLive = document.getElementById('tab-live');
+const tabUpcoming = document.getElementById('tab-upcoming');
+const sectionLive = document.getElementById('live');
+const sectionUpcoming = document.getElementById('upcoming');
+
+tabLive.onclick = () => {
+  tabLive.classList.add('active');
+  tabUpcoming.classList.remove('active');
+  sectionLive.classList.remove('hidden');
+  sectionUpcoming.classList.add('hidden');
+};
+tabUpcoming.onclick = () => {
+  tabUpcoming.classList.add('active');
+  tabLive.classList.remove('active');
+  sectionUpcoming.classList.remove('hidden');
+  sectionLive.classList.add('hidden');
+};
+
+async function fetchLiveEvents() {
+  const url = "https://raw.githubusercontent.com/drmlive/fancode-live-events/main/fancode.m3u";
+  const prefix = "https://starry7c.github.io/CrixzyLive?stream=";
+
+  try {
+    const res = await fetch(url);
+    const text = await res.text();
+    const lines = text.split('\n');
+
+    let title = "", logo = "";
+
+    for (let i = 0; i < lines.length; i++) {
+if (lines[i].startsWith("#EXTINF")) {
+  const cleanLine = lines[i]
+    .replace(/tvg-logo=".*?"/g, '')      // remove tvg-logo
+    .replace(/group-title=".*?"/g, '')   // remove group-title
+    .trim();
+
+  const logoMatch = lines[i].match(/tvg-logo="(.*?)"/);
+  logo = logoMatch ? logoMatch[1] : "";
+
+  const titleMatch = cleanLine.match(/,(.+)$/);
+  title = titleMatch ? titleMatch[1].trim() : "Unknown Match";
+}
+      else if (lines[i].startsWith("http")) {
+        const streamUrl = lines[i];
+
+        const card = document.createElement("div");
+        card.className = "match-card p-4 flex flex-col items-center text-center";
+
+        const img = document.createElement("img");
+        img.src = logo;
+        img.alt = title;
+        img.className = "match-img w-full h-56 object-contain rounded-xl mb-3";
+        card.appendChild(img);
+
+        const titleEl = document.createElement("h2");
+        titleEl.className = "text-lg font-semibold mb-3 text-white";
+        titleEl.innerText = title;
+        card.appendChild(titleEl);
+
+        const btn = document.createElement("a");
+        btn.href = prefix + encodeURIComponent(streamUrl);
+        btn.target = "_blank";
+        btn.className = "btn btn-primary";
+        btn.innerText = "Click to Watch";
+        card.appendChild(btn);
+
+        sectionLive.appendChild(card);
+      }
+    }
+  } catch (e) {
+    console.error("Error loading live matches:", e);
+  }
+}
+
+async function fetchUpcoming() {
+  const url = "https://api.allorigins.win/raw?url=https://raw.githubusercontent.com/drmlive/fancode-live-events/main/fancode.json";
+
+  try {
+    const res = await fetch(url);
+    const data = await res.json();
+
+    data.matches.forEach(match => {
+      const card = document.createElement("div");
+      card.className = "match-card overflow-hidden";
+
+      card.innerHTML = `
+        <div class="relative">
+          <img src="${match.src}" alt="${match.title}" class="match-img w-full h-60 object-cover">
+        </div>
+        <div class="p-5">
+          <h2 class="text-xl font-bold mb-2">${match.event_name}</h2>
+          <p class="text-sm text-gray-300 mb-1">${match.match_name}</p>
+          <p class="text-xs text-gray-400 mb-4">Start: ${match.startTime}</p>
+          <div class="flex flex-wrap gap-3">
+            ${match.dai_url ? `<a href="https://starry7c.github.io/CrixzyLive?stream=${match.dai_url}" target="_blank" class="btn btn-primary">Watch</a>` : ''}
+            ${match.adfree_url ? `<a href="https://starry7c.github.io/CrixzyLive/?stream=${match.adfree_url}" target="_blank" class="btn btn-secondary">Ad-Free</a>` : ''}
+          </div>
+        </div>
+      `;
+      sectionUpcoming.appendChild(card);
+    });
+  } catch (e) {
+    console.error("Error loading upcoming:", e);
+  }
+}
+
+fetchLiveEvents();
+fetchUpcoming();
+</script>
+
+<p class="mt-10 text-center text-sm text-gray-500">Disclaimer: All content is fetched from public sources. We do not host any content. Credit: drm</p>
+
+</body>
+</html>
+<!-- put near the end of <body> -->
+<script>
+// Disable right-click
+document.addEventListener('contextmenu', e => e.preventDefault());
+
+// Block common devtools key combos
+document.addEventListener('keydown', function(e) {
+  const key = e.key || e.keyIdentifier || String.fromCharCode(e.keyCode);
+  // F12
+  if (e.key === 'F12') { e.preventDefault(); e.stopPropagation(); return false; }
+  // Ctrl+Shift+I / Ctrl+Shift+C / Ctrl+Shift+J
+  if (e.ctrlKey && e.shiftKey && ['I','C','J'].includes((key+'').toUpperCase())) {
+    e.preventDefault(); e.stopPropagation(); return false;
+  }
+  // Ctrl+U (view-source), Ctrl+S (save), Ctrl+Shift+S
+  if (e.ctrlKey && ['u','s'].includes((key+'').toLowerCase())) {
+    e.preventDefault(); e.stopPropagation(); return false;
+  }
+});
+
+// Very simple devtools detector (heuristic)
+(function(){
+  let devtoolsOpen = false;
+  const threshold = 160; // adjust if needed
+  setInterval(() => {
+    const widthDiff = window.outerWidth - window.innerWidth;
+    const heightDiff = window.outerHeight - window.innerHeight;
+    if (widthDiff > threshold || heightDiff > threshold) {
+      if (!devtoolsOpen) {
+        devtoolsOpen = true;
+        // an action to discourage: hide content or show stern message
+        document.documentElement.style.filter = 'blur(6px)';
+        console.warn('DevTools detected — content blurred.');
+      }
+    } else {
+      if (devtoolsOpen) {
+        devtoolsOpen = false;
+        document.documentElement.style.filter = '';
+        console.info('DevTools closed.');
+      }
+    }
+  }, 800);
+})();
+</script>
