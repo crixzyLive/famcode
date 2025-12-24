@@ -234,8 +234,8 @@ async function fetchUpcoming() {
           <p class="text-sm text-gray-300 mb-1">${match.match_name}</p>
           <p class="text-xs text-gray-400 mb-4">Start: ${match.startTime}</p>
           <div class="flex flex-wrap gap-3">
-            ${match.dai_url ? `<a href="https://starry7c.github.io/CrixzyLive?stream=${match.dai_url}" target="_blank" class="btn btn-primary">Watch</a>` : ''}
-            ${match.adfree_url ? `<a href="https://starry7c.github.io/CrixzyLive/?stream=${match.adfree_url}" target="_blank" class="btn btn-secondary">Ad-Free</a>` : ''}
+            ${match.dai_url ? `<a href="https://starry7c.github.io/CrixzyLive/m3u8.html?stream=${match.dai_url}" target="_blank" class="btn btn-primary">Watch</a>` : ''}
+            ${match.adfree_url ? `<a href="https://starry7c.github.io/CrixzyLive/m3u8.html?stream=${match.adfree_url}" target="_blank" class="btn btn-secondary">Ad-Free</a>` : ''}
           </div>
         </div>
       `;
