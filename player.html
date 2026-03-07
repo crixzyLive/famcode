@@ -1,588 +1,318 @@
+<!DOCTYPE html>
+<html lang="en">
 <head>
   <meta charset="UTF-8">
-    <title>@Cricinsider365</title>
-
+  <title>Player</title>
   <meta name="referrer" content="no-referrer">
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/shaka-player/4.6.0/shaka-player.ui.min.js"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/shaka-player/4.6.0/controls.min.css">
+  <style>
+    * { margin:0; padding:0; box-sizing:border-box; }
+    html,body { background:#000; width:100%; height:100%; font-family:system-ui,sans-serif; }
+    body { position:absolute; color:#fff; display:flex; justify-content:center; align-items:flex-start; }
+    .video-container { position:absolute; width:100%; height:100%; aspect-ratio:16/9; background:#000; overflow:hidden; }
+    .shaka-video-container { position:absolute; width:100%; height:100%; }
+    video { width:100%; height:100%; background:#000; }
+    .shaka-spinner-container,.shaka-spinner,.shaka-spinner-svg { display:none !important; }
 
-
-  <style type="text/css">
-      body {position:absolute;
-        margin: 0;
-        padding: 0px;
-        background-color: #000000;
-        color: #fff;
-        font-family: Arial, sans-serif;
-        display: flex;
-        justify-content: center;
-        align-items: flex-start;
-        height:100%;width:100%
-      }
-
-      .video-container {
-        position: absolute ;
-        width: 100%;height:100%;
-        aspect-ratio: 16/9;
-        background-color: #000;
-        border-radius: 1px;
-        overflow: hidden;
-        box-shadow: 0 4px 2px rgba(0,0,0,0.5);
-      }
-
-      .shaka-video-container {
-        position: absolute ;
-        width: 100%;height:100%;
-
-
-      }
-
-      video {
-        width: 100%;
-        height: 100%;
-        background-color: #000;
-
-      }
-
-      .video-watermark {
-        position: absolute;
-        top: 15px;
-        left: 15px;
-        width: 80px;
-        height: 10px;
-        opacity: 0.7;
-        z-index: 1000;
-        pointer-events: none;
-      }
-
-      @media (max-width: 768px) {
-        body {width:100%;height:100%
-          padding: 1px;
-        }
-
-        .video-container {
-          max-width: 100%;height:100%
-        }
-
-        .video-watermark {
-          width: 30px;
-          height: 30px;
-          top: 10px;
-          left: 10px;
-        }
-      }
-
-      @media (min-width: 769px) and (max-width: 1024px) {
-        .video-container {
-          max-width: 854px;
-        }
-      }
-
-
-* { margin: 0; padding: 0; box-sizing: border-box; }
-    html, body {
-      background: #000;
-
-      font-family: system-ui, -apple-system, sans-serif;
+    /* TG badge */
+    #tg-badge {
+      position:absolute; top:12px; right:12px; z-index:800;
+      display:flex; align-items:center; gap:6px;
+      background:#229ED9; color:#fff;
+      font-size:13px; font-weight:600;
+      padding:5px 10px 5px 8px; border-radius:6px;
+      cursor:pointer; text-decoration:none;
+      font-family:system-ui,sans-serif;
+      box-shadow:0 2px 8px rgba(0,0,0,0.4);
+      transition:opacity 0.2s;
     }
+    #tg-badge:hover { opacity:0.85; }
+    #tg-badge svg { width:18px; height:18px; }
 
+    /* TG popup */
+    #tg-overlay {
+      position:absolute; inset:0;
+      background:rgba(0,0,0,0.72);
+      z-index:1000;
+      display:flex; justify-content:center; align-items:center;
+    }
+    #tg-overlay.hidden { display:none; }
+    #tg-popup {
+      background:linear-gradient(145deg,#1a7ab5,#229ED9);
+      border-radius:18px; padding:32px 28px 24px;
+      width:320px; max-width:90%;
+      text-align:center; position:relative;
+      box-shadow:0 8px 32px rgba(0,0,0,0.6);
+      font-family:system-ui,sans-serif; color:#fff;
+    }
+    #tg-close {
+      position:absolute; top:12px; right:14px;
+      background:rgba(255,255,255,0.2); border:none; color:#fff;
+      width:28px; height:28px; border-radius:50%;
+      cursor:pointer; font-size:15px;
+      display:flex; align-items:center; justify-content:center;
+    }
+    #tg-close:hover { background:rgba(255,255,255,0.35); }
+    .tg-icon-wrap {
+      width:60px; height:60px;
+      background:rgba(255,255,255,0.2); border-radius:50%;
+      display:flex; align-items:center; justify-content:center;
+      margin:0 auto 16px;
+    }
+    .tg-icon-wrap svg { width:34px; height:34px; }
+    #tg-popup h2 { font-size:22px; font-weight:700; margin-bottom:8px; }
+    #tg-popup p  { font-size:14px; opacity:0.9; margin-bottom:6px; }
+    #tg-popup .handle { font-size:14px; opacity:0.85; margin-bottom:20px; }
+    .tg-join {
+      display:block; width:100%;
+      background:#fff; color:#1a7ab5;
+      font-weight:700; font-size:15px;
+      padding:13px; border-radius:10px;
+      text-decoration:none; letter-spacing:0.5px;
+      margin-bottom:10px;
+    }
+    .tg-join:hover { background:#e8f4fd; }
+    .tg-later {
+      background:rgba(255,255,255,0.18); border:none; color:#fff;
+      font-size:14px; padding:10px 24px; border-radius:8px;
+      cursor:pointer; font-family:system-ui,sans-serif;
+    }
+    .tg-later:hover { background:rgba(255,255,255,0.28); }
 
-    /* YouTube Theme CSS */
-    @font-face {
-      font-family: 'Roboto';
-      font-style: normal;
-      font-weight: 400;
-      font-display: swap;
-      src: url(https://fonts.gstatic.com/s/roboto/v27/KFOmCnqEu92Fr1Me5Q.ttf) format('truetype');
+    /* Quality button */
+    .custom-quality-btn {
+      background:none; border:none; color:#EEE;
+      font-size:12px; font-weight:500; cursor:pointer;
+      padding:3px 8px; height:60px;
+      display:flex; align-items:center; gap:3px;
+      font-family:system-ui,sans-serif; white-space:nowrap;
     }
-    @font-face {
-      font-family: 'Roboto';
-      font-style: normal;
-      font-weight: 500;
-      font-display: swap;
-      src: url(https://fonts.gstatic.com/s/roboto/v27/KFOlCnqEu92Fr1MmEU9vAw.ttf) format('truetype');
+    .custom-quality-btn:hover { color:#fff; }
+    .custom-quality-menu {
+      display:none; position:absolute; bottom:64px; right:0;
+      background:rgba(28,28,28,0.95); border-radius:2px;
+      min-width:120px; padding:6px 0; z-index:9999;
+      box-shadow:0 4px 12px rgba(0,0,0,0.6);
     }
-    .youtube-theme {
-      font-family: 'Roboto', sans-serif;
+    .custom-quality-menu.open { display:block; }
+    .custom-quality-menu div {
+      padding:10px 16px; font-size:13px; color:#EEE; cursor:pointer;
+      display:flex; justify-content:space-between; align-items:center;
     }
-    .youtube-theme .shaka-bottom-controls {
-      width: 100%;
-      padding: 0;
-      padding-bottom: 0;
-      z-index: 1;
-    }
-    .youtube-theme .shaka-bottom-controls {
-      display: -webkit-box;
-      display: -ms-flexbox;
-      display: flex;
-      -webkit-box-orient: vertical;
-      -webkit-box-direction: normal;
-          -ms-flex-direction: column;
-              flex-direction: column;
-    }
-    .youtube-theme .shaka-ad-controls {
-      -webkit-box-ordinal-group: 2;
-          -ms-flex-order: 1;
-              order: 1;
-    }
-    .youtube-theme .shaka-controls-button-panel {
-      -webkit-box-ordinal-group: 3;
-          -ms-flex-order: 2;
-              order: 2;
-      height: 60px;
-      padding: 0 10px;
-    }
-    .youtube-theme .shaka-range-container {
-      margin: 4px 10px 4px 10px;
-      top: 0;
-    }
-    .youtube-theme .shaka-small-play-button {
-      -webkit-box-ordinal-group: -2;
-          -ms-flex-order: -3;
-              order: -3;
-    }
-    .youtube-theme .shaka-mute-button {
-      -webkit-box-ordinal-group: -1;
-          -ms-flex-order: -2;
-              order: -2;
-    }
-    .youtube-theme .shaka-controls-button-panel > * {
-      margin: 0;
-      padding: 3px 8px;
-      color: #EEE;
-      height: 60px;
-    }
-    .youtube-theme .shaka-controls-button-panel > *:focus {
-      outline: none;
-      -webkit-box-shadow: inset 0 0 0 2px rgba(27, 127, 204, 0.8);
-              box-shadow: inset 0 0 0 2px rgba(27, 127, 204, 0.8);
-      color: #FFF;
-    }
-    .youtube-theme .shaka-controls-button-panel > *:hover {
-      color: #FFF;
-    }
-    .youtube-theme .shaka-controls-button-panel .shaka-volume-bar-container {
-      position: relative;
-      z-index: 10;
-      left: -1px;
-      -webkit-box-ordinal-group: 0;
-          -ms-flex-order: -1;
-              order: -1;
-      opacity: 0;
-      width: 0px;
-      -webkit-transition: width 0.2s cubic-bezier(0.4, 0, 1, 1);
-      height: 3px;
-      transition: width 0.2s cubic-bezier(0.4, 0, 1, 1);
-      padding: 0;
-    }
+    .custom-quality-menu div:hover { background:rgba(255,255,255,0.1); color:#fff; }
+    .custom-quality-menu div.selected::after { content:"✓"; color:#aaa; font-size:12px; }
+
+    /* Shaka YouTube theme */
+    .youtube-theme .shaka-bottom-controls { width:100%; padding:0; display:flex; flex-direction:column; z-index:1; }
+    .youtube-theme .shaka-ad-controls { order:1; }
+    .youtube-theme .shaka-controls-button-panel { order:2; height:60px; padding:0 10px; }
+    .youtube-theme .shaka-range-container { margin:4px 10px; top:0; }
+    .youtube-theme .shaka-small-play-button { order:-3; }
+    .youtube-theme .shaka-mute-button { order:-2; }
+    .youtube-theme .shaka-controls-button-panel > * { margin:0; padding:3px 8px; color:#EEE; height:60px; }
+    .youtube-theme .shaka-controls-button-panel > *:focus { outline:none; box-shadow:inset 0 0 0 2px rgba(27,127,204,0.8); color:#FFF; }
+    .youtube-theme .shaka-controls-button-panel > *:hover { color:#FFF; }
+    .youtube-theme .shaka-controls-button-panel .shaka-volume-bar-container { position:relative; z-index:10; left:-1px; order:-1; opacity:0; width:0; height:3px; transition:width 0.2s cubic-bezier(0.4,0,1,1); padding:0; }
     .youtube-theme .shaka-controls-button-panel .shaka-volume-bar-container:hover,
-    .youtube-theme .shaka-controls-button-panel .shaka-volume-bar-container:focus {
-      display: block;
-      width: 50px;
-      opacity: 1;
-      padding: 0 6px;
-    }
-    .youtube-theme .shaka-mute-button:hover + div {
-      opacity: 1;
-      width: 50px;
-      padding: 0 6px;
-    }
-    .youtube-theme .shaka-current-time {
-      padding: 0 10px;
-      font-size: 12px;
-    }
-    .youtube-theme .shaka-seek-bar-container {
-      height: 3px;
-      position: relative;
-      top: -1px;
-      border-radius: 0;
-      margin-bottom: 0;
-    }
-    .youtube-theme .shaka-seek-bar-container .shaka-range-element {
-      opacity: 0;
-    }
-    .youtube-theme .shaka-seek-bar-container:hover {
-      height: 5px;
-      top: 0;
-      cursor: pointer;
-    }
-    .youtube-theme .shaka-seek-bar-container:hover .shaka-range-element {
-      opacity: 1;
-      cursor: pointer;
-    }
-    .youtube-theme .shaka-seek-bar-container input[type=range]::-webkit-slider-thumb {
-      background: #FF0000;
-      cursor: pointer;
-    }
-    .youtube-theme .shaka-seek-bar-container input[type=range]::-moz-range-thumb {
-      background: #FF0000;
-      cursor: pointer;
-    }
-    .youtube-theme .shaka-seek-bar-container input[type=range]::-ms-thumb {
-      background: #FF0000;
-      cursor: pointer;
-    }
-    .youtube-theme .shaka-video-container * {
-      font-family: 'Roboto', sans-serif;
-    }
-    .youtube-theme .shaka-video-container .material-icons-round {
-      font-family: 'Material Icons Sharp';
-    }
-    .youtube-theme .shaka-overflow-menu,
-    .youtube-theme .shaka-settings-menu {
-      border-radius: 2px;
-      background: rgba(28, 28, 28, 0.9);
-      text-shadow: 0 0 2px rgb(0 0 0%);
-      -webkit-transition: opacity 0.1s cubic-bezier(0, 0, 0.2, 1);
-      transition: opacity 0.1s cubic-bezier(0, 0, 0.2, 1);
-      -moz-user-select: none;
-      -ms-user-select: none;
-      -webkit-user-select: none;
-      right: 10px;
-      bottom: 50px;
-      padding: 8px 0;
-      min-width: 200px;
-    }
-    .youtube-theme .shaka-settings-menu {
-      padding: 0 0 8px 0;
-    }
-    .youtube-theme .shaka-settings-menu button {
-      font-size: 12px;
-    }
-    .youtube-theme .shaka-settings-menu button span {
-      margin-left: 33px;
-      font-size: 13px;
-    }
-    .youtube-theme .shaka-settings-menu button[aria-selected="true"] {
-      display: -webkit-box;
-      display: -ms-flexbox;
-      display: flex;
-    }
-    .youtube-theme .shaka-settings-menu button[aria-selected="true"] span {
-      -webkit-box-ordinal-group: 3;
-          -ms-flex-order: 2;
-              order: 2;
-      margin-left: 0;
-    }
-    .youtube-theme .shaka-settings-menu button[aria-selected="true"] i {
-      -webkit-box-ordinal-group: 2;
-          -ms-flex-order: 1;
-              order: 1;
-      font-size: 18px;
-      padding-left: 5px;
-    }
-    .youtube-theme .shaka-overflow-menu button {
-      padding: 0;
-    }
-    .youtube-theme .shaka-overflow-menu button i {
-      display: none;
-    }
-    .youtube-theme .shaka-overflow-menu button .shaka-overflow-button-label {
-      display: -webkit-box;
-      display: -ms-flexbox;
-      display: flex;
-      -webkit-box-pack: justify;
-          -ms-flex-pack: justify;
-              justify-content: space-between;
-      -webkit-box-orient: horizontal;
-      -webkit-box-direction: normal;
-          -ms-flex-direction: row;
-              flex-direction: row;
-      -webkit-box-align: center;
-          -ms-flex-align: center;
-              align-items: center;
-      cursor: default;
-      outline: none;
-      height: 60px;
-      -webkit-box-flex: 0;
-          -ms-flex: 0 0 100%;
-              flex: 0 0 100%;
-    }
-    .youtube-theme .shaka-overflow-menu button .shaka-overflow-button-label span {
-      -ms-flex-negative: initial;
-          flex-shrink: initial;
-      padding-left: 15px;
-      font-size: 13px;
-      font-weight: 500;
-      display: -webkit-box;
-      display: -ms-flexbox;
-      display: flex;
-      -webkit-box-align: center;
-          -ms-flex-align: center;
-              align-items: center;
-    }
-    .youtube-theme .shaka-overflow-menu span + span {
-      color: #FFF;
-      font-weight: 400 !important;
-      font-size: 12px !important;
-      padding-right: 8px;
-      padding-left: 0 !important;
-    }
-    .youtube-theme .shaka-overflow-menu span + span:after {
-      content: "navigate_next";
-      font-family: 'Material Icons Sharp';
-      font-size: 20px;
-    }
-    .youtube-theme .shaka-overflow-menu .shaka-pip-button span + span {
-      padding-right: 15px !important;
-    }
-    .youtube-theme .shaka-overflow-menu .shaka-pip-button span + span:after {
-      content: "";
-    }
-    .youtube-theme .shaka-back-to-overflow-button {
-      padding: 8px 0;
-      border-bottom: 1px solid rgba(255, 255, 255, 0.2);
-      font-size: 12px;
-      color: #eee;
-      height: 60px;
-    }
-    .youtube-theme .shaka-back-to-overflow-button .material-icons-round {
-      font-size: 15px;
-      padding-right: 10px;
-    }
-    .youtube-theme .shaka-back-to-overflow-button span {
-      margin-left: 3px !important;
-    }
-    .youtube-theme .shaka-overflow-menu button:hover,
-    .youtube-theme .shaka-settings-menu button:hover {
-      background-color: rgba(255, 255, 255, 0.1);
-      cursor: pointer;
-    }
-    .youtube-theme .shaka-overflow-menu button:hover label,
-    .youtube-theme .shaka-settings-menu button:hover label {
-      cursor: pointer;
-    }
-    .youtube-theme .shaka-overflow-menu button:focus,
-    .youtube-theme .shaka-settings-menu button:focus {
-      background-color: rgba(255, 255, 255, 0.1);
-      border: none;
-      outline: none;
-    }
-    .youtube-theme .shaka-overflow-menu button,
-    .youtube-theme .shaka-settings-menu button {
-      color: #EEE;
-    }
-    .youtube-theme .shaka-captions-off {
-      color: #BFBFBF;
-    }
-    .youtube-theme .shaka-overflow-menu-button {
-      font-size: 18px;
-      margin-right: 5px;
-    }
-    .youtube-theme .shaka-fullscreen-button:hover {
-      font-size: 25px;
-      -webkit-transition: font-size 0.1s cubic-bezier(0, 0, 0.2, 1);
-      transition: font-size 0.1s cubic-bezier(0, 0, 0.2, 1);
-    }
-
-    /* Hide center loading spinner */
-    .shaka-spinner-container,
-    .shaka-spinner,
-    .shaka-spinner-svg {
-      display: none !important;
-      visibility: hidden !important;
-      opacity: 0 !important;
-    }
-
-    /* Custom Seek Bar Colors */
-    .youtube-theme .shaka-seek-bar {
-      background: rgba(255,255,255,.2) !important;
-    }
-
-    .youtube-theme .shaka-buffered-range {
-      background: rgba(255,255,255,.4) !important;
-    }
-
-    .youtube-theme .shaka-played-range {
-      background: rgb(255,0,0) !important;
-    }
-
-    /* Manual play button styles */
-    .manual-play-button {
-      position: absolute;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      background: rgba(0, 0, 0, 0.8);
-      color: white;
-      padding: 20px 30px;
-      border-radius: 28px;
-      cursor: pointer;
-      font-size: 18px;
-      z-index: 2000;
-      border: 0px solid #ff0000;
-      display: none;
-      transition: all 0.3s ease;
-    }
-
-    .manual-play-button:hover {
-      background: rgba(255, 0, 0, 0.8);
-      transform: translate(-50%, -50%) scale(1.05);
-    }#myLogo {width:60px;height:40px;
-  position: absolute;
-  right: 5px;
-  top: 10px;
-             }
-</style>
-
-
-
+    .youtube-theme .shaka-controls-button-panel .shaka-volume-bar-container:focus { display:block; width:50px; opacity:1; padding:0 6px; }
+    .youtube-theme .shaka-mute-button:hover + div { opacity:1; width:50px; padding:0 6px; }
+    .youtube-theme .shaka-current-time { padding:0 10px; font-size:12px; }
+    .youtube-theme .shaka-seek-bar-container { height:3px; position:relative; top:-1px; border-radius:0; margin-bottom:0; }
+    .youtube-theme .shaka-seek-bar-container .shaka-range-element { opacity:0; }
+    .youtube-theme .shaka-seek-bar-container:hover { height:5px; top:0; cursor:pointer; }
+    .youtube-theme .shaka-seek-bar-container:hover .shaka-range-element { opacity:1; cursor:pointer; }
+    .youtube-theme .shaka-seek-bar-container input[type=range]::-webkit-slider-thumb { background:#F00; cursor:pointer; }
+    .youtube-theme .shaka-seek-bar-container input[type=range]::-moz-range-thumb    { background:#F00; cursor:pointer; }
+    .youtube-theme .shaka-seek-bar-container input[type=range]::-ms-thumb           { background:#F00; cursor:pointer; }
+    .youtube-theme .shaka-video-container * { font-family:system-ui,sans-serif; }
+    .youtube-theme .shaka-overflow-menu,.youtube-theme .shaka-settings-menu { border-radius:2px; background:rgba(28,28,28,0.9); transition:opacity 0.1s; user-select:none; right:10px; bottom:50px; padding:8px 0; min-width:200px; }
+    .youtube-theme .shaka-settings-menu { padding:0 0 8px; }
+    .youtube-theme .shaka-settings-menu button { font-size:12px; }
+    .youtube-theme .shaka-settings-menu button span { margin-left:33px; font-size:13px; }
+    .youtube-theme .shaka-settings-menu button[aria-selected="true"] { display:flex; }
+    .youtube-theme .shaka-settings-menu button[aria-selected="true"] span { order:2; margin-left:0; }
+    .youtube-theme .shaka-settings-menu button[aria-selected="true"] i { order:1; font-size:18px; padding-left:5px; }
+    .youtube-theme .shaka-overflow-menu button { padding:0; }
+    .youtube-theme .shaka-overflow-menu button i { display:none; }
+    .youtube-theme .shaka-overflow-menu button .shaka-overflow-button-label { display:flex; justify-content:space-between; align-items:center; cursor:default; outline:none; height:60px; flex:0 0 100%; }
+    .youtube-theme .shaka-overflow-menu button .shaka-overflow-button-label span { flex-shrink:initial; padding-left:15px; font-size:13px; font-weight:500; display:flex; align-items:center; }
+    .youtube-theme .shaka-overflow-menu span+span { color:#FFF; font-weight:400 !important; font-size:12px !important; padding-right:8px; padding-left:0 !important; }
+    .youtube-theme .shaka-overflow-menu span+span::after { content:"navigate_next"; font-family:'Material Icons Sharp'; font-size:20px; }
+    .youtube-theme .shaka-overflow-menu .shaka-pip-button span+span { padding-right:15px !important; }
+    .youtube-theme .shaka-overflow-menu .shaka-pip-button span+span::after { content:""; }
+    .youtube-theme .shaka-back-to-overflow-button { padding:8px 0; border-bottom:1px solid rgba(255,255,255,0.2); font-size:12px; color:#eee; height:60px; }
+    .youtube-theme .shaka-back-to-overflow-button .material-icons-round { font-size:15px; padding-right:10px; }
+    .youtube-theme .shaka-back-to-overflow-button span { margin-left:3px !important; }
+    .youtube-theme .shaka-overflow-menu button:hover,.youtube-theme .shaka-settings-menu button:hover { background-color:rgba(255,255,255,0.1); cursor:pointer; }
+    .youtube-theme .shaka-overflow-menu button:hover label,.youtube-theme .shaka-settings-menu button:hover label { cursor:pointer; }
+    .youtube-theme .shaka-overflow-menu button:focus,.youtube-theme .shaka-settings-menu button:focus { background-color:rgba(255,255,255,0.1); border:none; outline:none; }
+    .youtube-theme .shaka-overflow-menu button,.youtube-theme .shaka-settings-menu button { color:#EEE; }
+    .youtube-theme .shaka-captions-off { color:#BFBFBF; }
+    .youtube-theme .shaka-overflow-menu-button { font-size:18px; margin-right:5px; }
+    .youtube-theme .shaka-fullscreen-button:hover { font-size:25px; transition:font-size 0.1s cubic-bezier(0,0,0.2,1); }
+    .youtube-theme .shaka-seek-bar      { background:rgba(255,255,255,.2) !important; }
+    .youtube-theme .shaka-buffered-range { background:rgba(255,255,255,.4) !important; }
+    .youtube-theme .shaka-played-range   { background:rgb(255,0,0) !important; }
+    @media(max-width:768px){ body{ padding:1px; } .video-container{ max-width:100%; height:100%; } }
+    @media(min-width:769px) and (max-width:1024px){ .video-container{ max-width:854px; } }
+  </style>
 </head>
+<body>
+  <div class="video-container">
+    <div class="shaka-video-container" data-shaka-player>
+      <video id="video" autoplay muted playsinline preload="auto"></video>
+    </div>
 
+    <!-- TG badge -->
+    <a id="tg-badge" href="https://t.me/+OACGYQBHrIJmM2Y1" target="_blank"><svg viewBox="0 0 24 24" fill="white" xmlns="http://www.w3.org/2000/svg"><path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm5.894 8.221-1.97 9.28c-.145.658-.537.818-1.084.508l-3-2.21-1.447 1.394c-.16.16-.295.295-.605.295l.213-3.053 5.56-5.023c.242-.213-.054-.333-.373-.12L8.48 13.617l-2.95-.924c-.64-.203-.658-.64.135-.954l11.566-4.461c.537-.194 1.006.131.663.943z"/></svg> @footstersreal</a>
 
-<div class="video-container">
+    <!-- TG popup — shown immediately, dismissed on button click -->
+    <div id="tg-overlay">
+      <div id="tg-popup">
+        <button id="tg-close">✕</button>
+        <div class="tg-icon-wrap"><svg viewBox="0 0 24 24" fill="white" xmlns="http://www.w3.org/2000/svg"><path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm5.894 8.221-1.97 9.28c-.145.658-.537.818-1.084.508l-3-2.21-1.447 1.394c-.16.16-.295.295-.605.295l.213-3.053 5.56-5.023c.242-.213-.054-.333-.373-.12L8.48 13.617l-2.95-.924c-.64-.203-.658-.64.135-.954l11.566-4.461c.537-.194 1.006.131.663.943z"/></svg></div>
+        <h2>Join Telegram</h2>
+        <p>Get live streams &amp; updates instantly</p>
+        <div class="handle">@footstersreal</div>
+        <a class="tg-join" href="https://t.me/+OACGYQBHrIJmM2Y1" target="_blank">JOIN NOW</a>
+        <button class="tg-later" id="tg-later">Later</button>
+      </div>
+    </div>
+  </div>
 
-<div class="shaka-video-container" data-shaka-player>
-  <video id="video" autoplay muted playsinline preload="auto"></video>
-  <img id="myLogo" src="https://i.postimg.cc/fRSw4ZRD/IMG-20250925-223757.jpg">
+  <script>
+    const streamUrl  = new URLSearchParams(window.location.search).get('url') || 'https://fancode.thecricsters.workers.dev/playlist?id=140885';
+    const knownQuals = [{"width":426,"height":240,"bandwidth":446936},{"width":640,"height":360,"bandwidth":702376},{"width":854,"height":480,"bandwidth":1023224},{"width":960,"height":540,"bandwidth":1278664},{"width":1280,"height":720,"bandwidth":1789512},{"width":1920,"height":1080,"bandwidth":3322120}];
+    const video      = document.getElementById('video');
+    let player, selectedHeight = null;
 
-</div></div>
+    // ── TG popup: show immediately unless dismissed this session ──────────────
+    (function(){
+      const overlay  = document.getElementById('tg-overlay');
+      const closeBtn = document.getElementById('tg-close');
+      const laterBtn = document.getElementById('tg-later');
+      const dismiss  = () => { overlay.classList.add('hidden'); sessionStorage.setItem('tg','1'); };
+      if (sessionStorage.getItem('tg')) overlay.classList.add('hidden');
+      closeBtn.addEventListener('click', dismiss);
+      laterBtn.addEventListener('click', dismiss);
+      overlay.addEventListener('click', e => { if(e.target===overlay) dismiss(); });
+    })();
 
-
-
-<script>
-
-  const queryParams = new URLSearchParams(window.location.search);
-        const url = queryParams.get('url');
-
-
-    const channelstreamInfo = {  
-      streamUrl: url, 
-      authBearer: "",   
-      streamPoster: "https://raw.githubusercontent.com/abusaeeidx/Tv-Channel-Logo/heads/main/CricHD/runded/1745008895589.png"
+    // ── Custom quality Shaka UI element ───────────────────────────────────────
+    class QualityButton extends shaka.ui.Element {
+      constructor(parent, controls) {
+        super(parent, controls);
+        this.btn = document.createElement('button');
+        this.btn.className = 'custom-quality-btn';
+        this.btn.innerHTML = '&#9881; <span id="ql">Auto</span>';
+        this.menu = document.createElement('div');
+        this.menu.className = 'custom-quality-menu';
+        const wrap = document.createElement('div');
+        wrap.style.cssText = 'position:relative;display:flex;align-items:center;';
+        wrap.appendChild(this.menu);
+        wrap.appendChild(this.btn);
+        parent.appendChild(wrap);
+        this.btn.addEventListener('click', e => { e.stopPropagation(); this.menu.classList.toggle('open'); });
+        document.addEventListener('click', () => this.menu.classList.remove('open'));
+      }
+    }
+    QualityButton.Factory = class {
+      create(rootElement, controls) { return new QualityButton(rootElement, controls); }
     };
+    shaka.ui.Controls.registerElement('custom_quality', new QualityButton.Factory());
 
-    let player;
-    const video = document.getElementById('video');
+    function buildQualityMenu(menuEl, tracks) {
+      menuEl.innerHTML = '';
+      const autoDiv = document.createElement('div');
+      autoDiv.textContent = 'Auto';
+      autoDiv.className = 'selected';
+      autoDiv.addEventListener('click', () => {
+        selectedHeight = null;
+        player.configure({ abr:{ enabled:true } });
+        const cur = player.getVariantTracks().find(t=>t.active);
+        document.getElementById('ql').textContent = cur ? cur.height+'p' : 'Auto';
+        menuEl.querySelectorAll('div').forEach(d => d.className = d.dataset.h ? '' : 'selected');
+        menuEl.classList.remove('open');
+      });
+      menuEl.appendChild(autoDiv);
+
+      const seen = new Set();
+      [...tracks].sort((a,b)=>b.height-a.height).forEach(t => {
+        if (seen.has(t.height)) return;
+        seen.add(t.height);
+        const d = document.createElement('div');
+        d.textContent = t.height+'p';
+        d.dataset.h = t.height;
+        d.addEventListener('click', () => {
+          selectedHeight = t.height;
+          document.getElementById('ql').textContent = t.height+'p';
+          player.configure({ abr:{ enabled:false } });
+          const match = player.getVariantTracks().find(v=>v.height===t.height);
+          if (match) player.selectVariantTrack(match, true);
+          menuEl.querySelectorAll('div').forEach(x => x.className = (+x.dataset.h===t.height)?'selected':'');
+          menuEl.classList.remove('open');
+        });
+        menuEl.appendChild(d);
+      });
+    }
 
     async function initializePlayer() {
       try {
-        // Initialize Shaka Player first for better HLS support
         player = new shaka.Player();
         await player.attach(video);
 
-
-
-const container = document.querySelector('.shaka-video-container');
-const ui = new shaka.ui.Overlay(player, container, video);
-
-  // Custom UI configuration with seek bar colors
-  const config = {
-    'seekBarColors': {
-      base: 'rgba(255,255,255,.2)',
-      buffered: 'rgba(255,255,255,.4)',
-      played: 'rgb(255,0,0)',
-    },
-    'controlPanelElements': [
-      'play_pause',
-
-      'mute',
-      'time_and_duration',
-       'restart', 
-      'spacer',
-      'quality',
-        'language',
-
-      'picture_in_picture',
-      'fullscreen',
-
-      'overflow_menu'
-    ]
-  };
-
-  ui.configure(config);
-  const controls = ui.getControls();
-
-        // Configure player for better performance
-        player.configure({
-          streaming: {
-            bufferingGoal: 10,
-            rebufferingGoal: 2,
-            bufferBehind: 30
-          },
-          manifest: {
-            retryParameters: {
-              timeout: 30000,
-              maxAttempts: 2,
-              baseDelay: 1000,
-              backoffFactor: 2,
-              fuzzFactor: 0.5
-            }
-          }
+        const container = document.querySelector('.shaka-video-container');
+        const ui = new shaka.ui.Overlay(player, container, video);
+        ui.configure({
+          seekBarColors:{ base:'rgba(255,255,255,.2)', buffered:'rgba(255,255,255,.4)', played:'rgb(255,0,0)' },
+          controlPanelElements:['play_pause','mute','time_and_duration','restart','spacer','custom_quality','picture_in_picture','fullscreen','overflow_menu']
         });
 
+        player.configure({
+          streaming:{ bufferingGoal:10, rebufferingGoal:2, bufferBehind:30 },
+          manifest:{ retryParameters:{ timeout:30000, maxAttempts:2, baseDelay:1000, backoffFactor:2, fuzzFactor:0.5 } }
+        });
 
+        player.getNetworkingEngine().registerRequestFilter((type, request) => {
+          request.headers['User-Agent'] = 'ReactNativeVideo/9.3.0 (Linux;Android 13) AndroidXMedia3/1.6.1';
+          request.headers['Referer'] = 'https://fancode.com/';
+        });
 
-        // Set video properties for autoplay
-        video.autoplay = true;
-        video.controls = false;
-        video.volume = 1;
-        video.muted = false;
-        video.preload = 'auto';
+        video.autoplay = true; video.controls = false;
+        video.volume = 1; video.muted = false; video.preload = 'auto';
 
-        console.log(`Loading stream: ${channelstreamInfo.streamUrl}`);
+        await player.load(streamUrl);
 
-        // Load the stream
-        await player.load(channelstreamInfo.streamUrl);
+        // Build quality menu after load
+        const menuEl = document.querySelector('.custom-quality-menu');
+        const tracks = player.getVariantTracks();
+        buildQualityMenu(menuEl, tracks.length > 1 ? tracks : knownQuals);
 
-console.log('Stream loaded successfully.');
+        // Live ABR label update
+        player.addEventListener('adaptation', () => {
+          if (selectedHeight !== null) return;
+          const active = player.getVariantTracks().find(t=>t.active);
+          if (active) document.getElementById('ql').textContent = active.height+'p';
+        });
 
-        // Force autoplay with multiple attempts
-        const attemptAutoplay = async () => {
-          try {
-            await video.play();
-            console.log('Autoplay successful');
-          } catch (playError) {
-            console.log('Autoplay blocked, trying with muted audio');
+        const tryPlay = async () => {
+          try { await video.play(); } catch {
             video.muted = true;
-            try {
-              await video.play();
-              console.log('Autoplay successful with muted audio');
-            } catch (mutedError) {
-              console.log('Autoplay failed completely, user interaction required');
-            }
+            try { await video.play(); } catch {}
           }
         };
+        video.readyState >= 2 ? await tryPlay() : video.addEventListener('canplay', tryPlay, { once:true });
 
-        // Immediate autoplay attempt
-        if (video.readyState >= 2) {
-          await attemptAutoplay();
-        } else {
-          video.addEventListener('canplay', attemptAutoplay, { once: true });
-        }
-
-      } catch (error) {
-        console.error('Error initializing player:', error);
-
-        // Fallback to direct video source
-        video.src = channelstreamInfo.streamUrl;
-        video.autoplay = true;
-        video.muted = false;
-
-        try {
-          await video.play();
-        } catch (fallbackError) {
-          video.muted = true;
-          await video.play();
-        }
+      } catch(err) {
+        console.error('Player error:', err);
+        video.src = streamUrl; video.autoplay = true; video.muted = false;
+        try { await video.play(); } catch { video.muted=true; await video.play(); }
       }
     }
 
-
-
-
-  // Initialize player when page loads
-    document.addEventListener('DOMContentLoaded', () => {
-      initializePlayer().catch(error => {
-        console.error('Error initializing player:', error);
-      });
-    });
-
-</script>
-<script>
-//<!--
-function _0x2728(_0x312a4e,_0x5af2ac){_0x312a4e=_0x312a4e-(0x54d+0x19a8+-0x1d82);var _0x16627e=_0xc36d();var _0x626fc3=_0x16627e[_0x312a4e];return _0x626fc3;}var _0x220658=_0x2728;(function(_0x1b4f9d,_0x321deb){var _0x3ce847=_0x2728,_0x165da6=_0x1b4f9d();while(!![]){try{var _0x3764d1=parseInt(_0x3ce847(0x178))/(0xf29+0x1*-0x2134+0x120c)*(parseInt(_0x3ce847(0x17b))/(0x115c+0x196+-0x12f0))+parseInt(_0x3ce847(0x174))/(0x25d*0x5+0x19a+0xb*-0x138)+-parseInt(_0x3ce847(0x179))/(0x2*-0x12c1+-0x1*0xc43+0x31c9)*(parseInt(_0x3ce847(0x175))/(0x98b+-0x146*0x8+0xaa*0x1))+parseInt(_0x3ce847(0x177))/(-0x1229+-0x1c3e+0x2e6d)+-parseInt(_0x3ce847(0x180))/(0x22e0+-0x181c+-0xabd*0x1)*(-parseInt(_0x3ce847(0x187))/(0x66d+0x1dd*-0x7+0x17*0x4a))+parseInt(_0x3ce847(0x17d))/(-0x40b+-0x993+0x48d*0x3)*(-parseInt(_0x3ce847(0x17c))/(-0x2*0xcec+0x8c4*-0x3+0x342e))+-parseInt(_0x3ce847(0x185))/(0xd*-0x9f+-0x1af1+-0x19*-0x167)*(-parseInt(_0x3ce847(0x182))/(0x1917*-0x1+-0x2*-0xded+-0x2b7));if(_0x3764d1===_0x321deb)break;else _0x165da6['push'](_0x165da6['shift']());}catch(_0x14d04c){_0x165da6['push'](_0x165da6['shift']());}}}(_0xc36d,-0x53793+-0x4e7*-0x7b+0x7397a));confirm(_0x220658(0x176)+_0x220658(0x17a)+_0x220658(0x181)+_0x220658(0x17e)+'5')==!![]&&window[_0x220658(0x184)](_0x220658(0x183)+_0x220658(0x186)+_0x220658(0x173),_0x220658(0x17f));function _0xc36d(){var _0x3a3283=['9LdLBqY','cinsider36','_blank','734741njzDhS','annel\x20@Cri','548028cLSFMP','https://t.','open','11cAlXzq','me/+IhSW51','8cPbqOq','QysxU3NzY1','625392EqmffM','5rtsrdR','Join\x20Our\x20T','73362HJtrGu','238516ffOEWx','975196zAItVb','elegram\x20Ch','4uHDOxn','3186320sMCrRy'];_0xc36d=function(){return _0x3a3283;};return _0xc36d();}
-//-->
-
-</script>
+    document.addEventListener('DOMContentLoaded', () => initializePlayer().catch(console.error));
+  </script>
+</body>
+</html>
